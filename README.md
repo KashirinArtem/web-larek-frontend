@@ -45,6 +45,8 @@ npm run build
 yarn build
 ```
 
+https://github.com/KashirinArtem/web-larek-frontend
+
 Классы модели данных:
 
 - App
