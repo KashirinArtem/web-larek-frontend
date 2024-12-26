@@ -1,6 +1,6 @@
-import { FormFieldState, IOrder, IProduct } from '../types';
+import { FormFieldState, IApp, IOrder, IProduct } from '../types';
 
-export class App
+export class App implements IApp
 {
     public productList: IProduct[] = [];
     public basketList: IProduct[] = [];

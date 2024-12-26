@@ -1,9 +1,9 @@
-import { IOrderConfig } from '../types';
+import { IForm, IOrderConfig } from '../types';
 import { cloneTemplate, ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Component } from './Component';
 
-export class Form extends Component
+export abstract class Form extends Component implements IForm
 {
     protected _submit: HTMLElement;
     protected _errors: HTMLElement;

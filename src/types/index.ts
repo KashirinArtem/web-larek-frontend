@@ -1,3 +1,58 @@
+export interface IComponent
+{
+    get content(): HTMLElement;
+    clearContent(elem: HTMLLinkElement): void;
+    setText(elem: HTMLElement, text: string): void;
+    setId(elem: HTMLElement, id: string): void;
+    setImage(elem: HTMLElement, src: string, alt: string): void;
+    addClass(elem: HTMLElement, className: string): void;
+    removeClass(elem: HTMLElement, className: string): void;
+    setDisabled(elem: HTMLElement, value: boolean): void;
+    toggleClass(elem: HTMLElement, className: string, force?: boolean): void;
+    render(content: HTMLElement[], target?: HTMLElement): void;
+}
+
+export interface IForm
+{
+    get submit(): HTMLButtonElement;
+    set errors(err: string[]);
+    resetErrors(): void;
+    resetForm(): void;
+}
+
+export interface IPage
+{
+    set isLockedContainerByScroll(value: boolean);
+    set gallery(elements: HTMLElement[]);
+    set counter(count: number);
+}
+
+export interface IBasket
+{
+    set disabled(value: boolean);
+    set price(price: number);
+}
+
+export interface IOrderForm
+{
+    set address(value: string);
+    get address();
+    resetPayment(): void;
+}
+
+export interface IContactsForm
+{
+    set email(value: string);
+    get email();
+    set phone(value: string);
+    get phone();
+}
+
+export interface IOnInit
+{
+    onInit(obj: unknown): void;
+}
+
 export interface IProduct
 {
     id: string;
@@ -8,6 +63,23 @@ export interface IProduct
     price: number | null;
 }
 
+export interface IApp
+{
+    productList: IProduct[];
+    basketList: IProduct[];
+    order: IOrder;
+    paymentState: Partial<FormFieldState>;
+    addressState: Partial<FormFieldState>;
+    emailSate: Partial<FormFieldState>;
+    phoneState: Partial<FormFieldState>;
+    errors: string[];
+    isAddressValid(address: string): boolean;
+    isEmailValid(email: string): boolean;
+    isPhoneValid(phone: string): boolean;
+    resetOrderFormState(): void;
+    resetContactFormState(): void;
+    resetErrors(): void;
+}
 export interface ILarekApi
 {
     getAllProducts(): Promise<IProduct[]>;
@@ -83,13 +155,6 @@ export interface IModal
 {
     open: () => void;
     close: () => void;
-}
-
-export interface IPage
-{
-    set isLockedContainerByScroll(value: boolean);
-    set gallery(elements: HTMLElement[]);
-    set counter(count: number);
 }
 
 export interface IOrder

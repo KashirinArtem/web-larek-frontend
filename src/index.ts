@@ -89,7 +89,6 @@ api.getAllProducts()
         products =>
         {
             app.productList.push(...products);
-            // имитим рендеренг продуктов
             emitter.emit('products:render');
         })
     .catch(console.log);
@@ -116,7 +115,7 @@ emitter
                 }
             );
 
-            card.init(product);
+            card.onInit(product);
 
             return card.content;
         });
@@ -128,7 +127,7 @@ emitter
             emitter.emit('product:add', product);
         });
 
-        cardPreview.init(product);
+        cardPreview.onInit(product);
         modal.render([ cardPreview.content ]);
     })
     .on<IProduct>('product:add', product =>
@@ -152,7 +151,7 @@ emitter
                     cardBasketConfig,
                     () => emitter.emit('card:remove', product));
 
-                card.init({
+                card.onInit({
                     ...product,
                     index: ++index
                 });
@@ -181,8 +180,6 @@ emitter
         app.order.items = app.basketList.map(product => product.id);
         app.order.total = app.basketList.reduce(
             (prev, product) => prev + Number(product.price), 0);
-
-        order.init();
 
         const isValid = app.paymentState.isValid && app.addressState.isValid;
 
@@ -335,7 +332,7 @@ emitter
 
                 contact.setDisabled(contact.submit, true);
 
-                success.init(order.total);
+                success.onInit(order.total);
 
                 modal.render([ success.content ]);
             })
@@ -358,5 +355,5 @@ emitter
 
         page.counter = 0;
 
-        success.description = 0;
+        success.onInit(0);
     });

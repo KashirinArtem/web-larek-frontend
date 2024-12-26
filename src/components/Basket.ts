@@ -1,9 +1,9 @@
-import { IBasketConfig } from '../types';
+import { IBasket, IBasketConfig } from '../types';
 import { cloneTemplate, ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Component } from './Component';
 
-export class Basket extends Component
+export class Basket extends Component implements IBasket
 {
     protected _list: HTMLElement;
     protected _orderBtn: HTMLElement;

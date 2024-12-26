@@ -1,4 +1,6 @@
-export class Component
+import { IComponent } from '../types';
+
+export abstract class Component implements IComponent
 {
     protected _container: HTMLElement;
     constructor (container: HTMLElement)

@@ -1,9 +1,9 @@
-import { IOrderConfig } from '../types';
+import { IOnInit, IOrderConfig, IOrderForm } from '../types';
 import { ensureAllElements, ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Form } from './Form';
 
-export class Order extends Form
+export class Order extends Form implements IOrderForm
 {
     protected _paymentBtn: HTMLElement[];
     protected _address: HTMLElement;
@@ -16,10 +16,6 @@ export class Order extends Form
         this._paymentBtn = ensureAllElements(paymentBtn, this._container);
         this._address = ensureElement(address, this._container);
 
-    }
-
-    public init(): void
-    {
         this._paymentBtn.forEach(btn =>
         {
 

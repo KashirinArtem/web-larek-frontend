@@ -17,15 +17,10 @@ export class CardPreview extends CardGallery
         this._cardBtn.addEventListener('click', this._handler);
     }
 
-    public override init(product: IProduct): void
+    public override onInit(product: IProduct): void
     {
-        super.init(product);
+        super.onInit(product);
 
-        this.description = product.description;
-    }
-
-    set description(description: string)
-    {
-        this.setText(this._description, description);
+        this.setText(this._description, product.description);
     }
 }

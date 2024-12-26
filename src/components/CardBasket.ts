@@ -1,15 +1,14 @@
-import { ICardBasketConfig, IPage, IProduct, THandler } from '../types';
+import { ICardBasketConfig, IOnInit, IProduct, THandler } from '../types';
 import { cloneTemplate, ensureElement } from '../utils/utils';
-import { IEvents } from './base/events';
 import { Component } from './Component';
 
-export class CardBasket extends Component
+
+export class CardBasket extends Component implements IOnInit
 {
     protected _index: HTMLElement;
     protected _title: HTMLElement;
     protected _price: HTMLElement;
     protected _deleteBtn: HTMLElement;
-
 
     constructor ({ card, index, title, price, deleteBtn }: ICardBasketConfig, handler: THandler)
     {
@@ -23,36 +22,11 @@ export class CardBasket extends Component
         this._deleteBtn.addEventListener('click', handler);
     }
 
-    public init({ id, title, price, index }: IProduct & { index: number; }): void
-    {
-        this.index = index;
-        this.id = id;
-        this.title = title;
-        this.price = price;
-    }
-
-    set index(index: number)
+    public onInit({ title, price, id, index }: IProduct & { index: number; }): void
     {
         this.setText(this._index, String(index));
-    }
-
-    set title(title: string)
-    {
         this.setText(this._title, title);
-    }
-
-    set price(price: number)
-    {
         this.setText(this._price, price ? price + ' синапсов' : 'Бесценно');
-    }
-
-    set id(id: string)
-    {
         this.setId(this._container, id);
     }
-
-
-
-
-
 }

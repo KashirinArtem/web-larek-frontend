@@ -1,9 +1,9 @@
-import { IOrderConfig } from '../types';
+import { IContactsForm, IOrderConfig } from '../types';
 import { ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Form } from './Form';
 
-export class Contact extends Form
+export class Contact extends Form implements IContactsForm
 {
     protected _email: HTMLElement;
     protected _phone: HTMLElement;

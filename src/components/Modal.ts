@@ -52,8 +52,4 @@ export class Modal extends Component implements IModal
         this.open();
         this._content.append(...content);
     }
-
-
-
-
 }

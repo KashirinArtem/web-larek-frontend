@@ -9,9 +9,6 @@ export class Page extends Component implements IPage
     protected _counter: HTMLElement;
     protected _basket: HTMLElement;
 
-
-
-
     constructor (container: string, emitter: IEvents)
     {
         super(ensureElement(container));
@@ -40,8 +37,4 @@ export class Page extends Component implements IPage
         this.setText(this._counter, String(count));
 
     }
-
-
-
-
 }

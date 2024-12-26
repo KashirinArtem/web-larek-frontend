@@ -1,9 +1,9 @@
-import { ISuccessConfig } from '../types';
+import { IOnInit, ISuccessConfig } from '../types';
 import { cloneTemplate, ensureElement } from '../utils/utils';
 import { IEvents } from './base/events';
 import { Component } from './Component';
 
-export class Success extends Component
+export class Success extends Component implements IOnInit
 {
     protected _description: HTMLElement;
 
@@ -15,18 +15,14 @@ export class Success extends Component
 
         this._description = ensureElement(description, this._container);
         this._closeBtn = ensureElement(successBtn, this._container);
-    }
-
-    public init(totalPrice: number): void
-    {
-        this.setText(this._description, `Списано ${ totalPrice } синапсов`);
 
         this._closeBtn.addEventListener('click', () => this._emitter.emit('order:done'));
+
     }
 
-    set description(value: number)
+    public onInit(totalPrice: number): void
     {
-        this.setText(this._description, `Списано ${ value } синапсов`);
+        this.setText(this._description, `Списано ${ totalPrice } синапсов`);
     }
 
 }
