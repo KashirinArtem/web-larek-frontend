@@ -93,267 +93,282 @@ api.getAllProducts()
         })
     .catch(console.log);
 
-emitter
-    .on('modal:open', () =>
-    {
-        page.isLockedContainerByScroll = true;
-    })
-    .on('modal:close', () =>
-    {
-        page.isLockedContainerByScroll = false;
-    })
-    .on('products:render', () =>
-    {
-        page.gallery = app.productList.map(product =>
-        {
-            const card = new CardGallery(
-                cardGalleryConfig,
-                () =>
-                {
-                    // имитим выбор карточки
-                    emitter.emit('card:select', product);
-                }
-            );
+emitter.on('modal:open', () =>
+{
+    page.isLockedContainerByScroll = true;
+});
 
-            card.onInit(product);
+emitter.on('modal:close', () =>
+{
+    page.isLockedContainerByScroll = false;
+});
+
+emitter.on('products:render', () =>
+{
+    page.gallery = app.productList.map(product =>
+    {
+        const card = new CardGallery(
+            cardGalleryConfig,
+            () =>
+            {
+                emitter.emit('card:select', product);
+            }
+        );
+
+        card.onInit(product);
+
+        return card.content;
+    });
+});
+
+emitter.on<IProduct>('card:select', product =>
+{
+    const cardPreview = new CardPreview(cardPreviewConfig, () => 
+    {
+        emitter.emit('product:add', product);
+    });
+
+    cardPreview.onInit(product);
+    modal.render([ cardPreview.content ]);
+});
+
+emitter.on<IProduct>('product:add', product =>
+{
+    app.basketList.push(product);
+
+    page.counter = app.basketList.length;
+
+    modal.close();
+});
+
+emitter.on('basket:open', () =>
+{
+
+    basket.disabled = !app.basketList.length;
+    basket.price = app.basketList.reduce(
+        (prev, product) => prev + Number(product.price), 0);
+
+    if(app.basketList.length)
+    {
+        const cardItems = app.basketList.map((product, index) =>
+        {
+            const card = new CardBasket(
+                cardBasketConfig,
+                () => emitter.emit('card:remove', product));
+
+            card.onInit({
+                ...product,
+                index: ++index
+            });
 
             return card.content;
         });
-    })
-    .on<IProduct>('card:select', product =>
+
+        basket.render(cardItems);
+    } else
     {
-        const cardPreview = new CardPreview(cardPreviewConfig, () => 
-        {
-            emitter.emit('product:add', product);
-        });
+        basket.render([ cloneTemplate('#basket-empty') ]);
+    }
 
-        cardPreview.onInit(product);
-        modal.render([ cardPreview.content ]);
-    })
-    .on<IProduct>('product:add', product =>
+    modal.render([ basket.content ]);
+});
+
+emitter.on<IProduct>('card:remove', product =>
+{
+    console.log(1);
+    app.basketList = app.basketList.filter(item => item.id !== product.id);
+    page.counter = app.basketList.length;
+
+    emitter.trigger('basket:open');
+});
+
+emitter.on('basket:order', () =>
+{
+    app.order.items = app.basketList.map(product => product.id);
+    app.order.total = app.basketList.reduce(
+        (prev, product) => prev + Number(product.price), 0);
+
+    const isValid = app.paymentState.isValid && app.addressState.isValid;
+
+    order.setDisabled(order.submit, !isValid);
+
+    modal.render([ order.content ]);
+});
+
+emitter.on<{ address: string; }>('order:address', input =>
+{
+    order.address = input.address;
+});
+
+emitter.on<{ payment: string; }>('order:payment', input =>
+{
+    const isValid = () => app.paymentState.isValid && app.addressState.isValid;
+
+    if(!input?.payment)
     {
-        app.basketList.push(product);
-        page.counter = app.basketList.length;
-        modal.close();
-    })
-    .on('basket:open', () =>
+        app.paymentState.isValid = false;
+        app.errors.push(app.paymentState.errorMessage);
+
+        order.errors = app.errors;
+        order.setDisabled(order.submit, true);
+
+        return;
+    } else
     {
-
-        basket.disabled = !app.basketList.length;
-        basket.price = app.basketList.reduce(
-            (prev, product) => prev + Number(product.price), 0);
-
-        if(app.basketList.length)
-        {
-            const cardItem = app.basketList.map((product, index) =>
-            {
-                const card = new CardBasket(
-                    cardBasketConfig,
-                    () => emitter.emit('card:remove', product));
-
-                card.onInit({
-                    ...product,
-                    index: ++index
-                });
-
-                return card.content;
-            });
-
-            basket.render(cardItem);
-        } else
-        {
-            basket.render([ cloneTemplate('#basket-empty') ]);
-        }
-
-        modal.render([ basket.content ]);
-    })
-    .on<IProduct>('card:remove', product =>
-    {
-        console.log(1);
-        app.basketList = app.basketList.filter(item => item.id !== product.id);
-        page.counter = app.basketList.length;
-
-        emitter.emit('basket:open');
-    })
-    .on('basket:order', () =>
-    {
-        app.order.items = app.basketList.map(product => product.id);
-        app.order.total = app.basketList.reduce(
-            (prev, product) => prev + Number(product.price), 0);
-
-        const isValid = app.paymentState.isValid && app.addressState.isValid;
-
-        order.setDisabled(order.submit, !isValid);
-
-        modal.render([ order.content ]);
-    })
-    .on<{ address: string; }>('order:address', input =>
-    {
-        order.address = input.address;
-    })
-    .on<{ payment: string; }>('order:payment', input =>
-    {
-        const isValid = () => app.paymentState.isValid && app.addressState.isValid;
-
-        if(!input?.payment)
-        {
-            app.paymentState.isValid = false;
-            app.errors.push(app.paymentState.errorMessage);
-
-            order.errors = app.errors;
-            order.setDisabled(order.submit, true);
-
-            return;
-        } else
-        {
-            app.order.payment = input.payment;
-            app.paymentState.isValid = true;
-            app.resetErrors();
-
-            order.resetErrors();
-
-            !isValid() && emitter.emit('address:validation');
-        }
-
-        isValid() && order.setDisabled(order.submit, false);
-    })
-    .on<{ email: string; }>('contacts:email', input =>
-    {
-        contact.email = input.email;
-    })
-    .on<{ email: string; }>('email:validation', input =>
-    {
-        const isValid = () => app.emailSate.isValid && app.phoneState.isValid;
-
-        if(!app.isEmailValid(input.email))
-        {
-            app.emailSate.isValid = false;
-            app.errors.push(app.emailSate.errorMessage);
-
-            contact.errors = app.errors;
-            contact.setDisabled(contact.submit, !isValid());
-
-            return;
-        }
-        else
-        {
-            app.emailSate.isValid = true;
-            app.order.email = input.email;
-            app.resetErrors();
-
-            contact.resetErrors();
-            contact.setDisabled(contact.submit, !isValid());
-        }
-
-        !isValid() && emitter.emit('phone:validation', { phone: contact.phone });
-    })
-    .on<{ phone: string; }>('contacts:phone', input =>
-    {
-        contact.phone = input.phone;
-
-    })
-    .on<{ phone: string; }>('phone:validation', input =>
-    {
-        const isValid = () => app.emailSate.isValid && app.paymentState.isValid;
-        contact.setDisabled(order.submit, !isValid());
-
-        if(!app.isPhoneValid(input.phone))
-        {
-            app.phoneState.isValid = false;
-            app.errors.push(app.phoneState.errorMessage);
-
-            contact.errors = app.errors;
-            contact.setDisabled(contact.submit, !isValid());
-
-            return;
-        } else
-        {
-            app.phoneState.isValid = true;
-            app.order.phone = input.phone;
-            app.resetErrors();
-
-            contact.resetErrors();
-            contact.setDisabled(contact.submit, !isValid());
-        }
-
-        !isValid() && emitter.emit('email:validation', { email: contact.email });
-    })
-    .on<{ address: string; }>('address:validation', input =>
-    {
-        const address = input?.address || order.address;
-        const isValid = () => app.paymentState.isValid && app.addressState.isValid;
-
-        if(!app.isAddressValid(address))
-        {
-            app.addressState.isValid = false;
-            app.errors.push(app.addressState.errorMessage);
-
-            order.errors = app.errors;
-            order.setDisabled(order.submit, true);
-
-        } else
-        {
-            app.order.address = input.address;
-            app.addressState.isValid = true;
-            app.resetErrors();
-
-            order.resetErrors();
-            order.setDisabled(order.submit, false);
-
-            !isValid() && emitter.emit('order:payment');
-        }
-
-        !isValid() && order.setDisabled(order.submit, true);
-
-
-    })
-    .on('order:submit', () =>
-    {
-        app.resetOrderFormState();
+        app.order.payment = input.payment;
+        app.paymentState.isValid = true;
         app.resetErrors();
 
         order.resetErrors();
-        order.resetPayment();
-        order.resetForm();
+
+        !isValid() && emitter.emit('address:validation');
+    }
+
+    isValid() && order.setDisabled(order.submit, false);
+});
+
+emitter.on<{ email: string; }>('contacts:email', input =>
+{
+    contact.email = input.email;
+});
+
+emitter.on<{ email: string; }>('email:validation', input =>
+{
+    const isValid = () => app.emailSate.isValid && app.phoneState.isValid;
+
+    if(!app.isEmailValid(input.email))
+    {
+        app.emailSate.isValid = false;
+        app.errors.push(app.emailSate.errorMessage);
+
+        contact.errors = app.errors;
+        contact.setDisabled(contact.submit, !isValid());
+
+        return;
+    }
+    else
+    {
+        app.emailSate.isValid = true;
+        app.order.email = input.email;
+        app.resetErrors();
+
+        contact.resetErrors();
+        contact.setDisabled(contact.submit, !isValid());
+    }
+
+    !isValid() && emitter.emit('phone:validation', { phone: contact.phone });
+});
+
+emitter.on<{ phone: string; }>('contacts:phone', input =>
+{
+    contact.phone = input.phone;
+
+});
+
+emitter.on<{ phone: string; }>('phone:validation', input =>
+{
+    const isValid = () => app.emailSate.isValid && app.paymentState.isValid;
+    contact.setDisabled(order.submit, !isValid());
+
+    if(!app.isPhoneValid(input.phone))
+    {
+        app.phoneState.isValid = false;
+        app.errors.push(app.phoneState.errorMessage);
+
+        contact.errors = app.errors;
+        contact.setDisabled(contact.submit, !isValid());
+
+        return;
+    } else
+    {
+        app.phoneState.isValid = true;
+        app.order.phone = input.phone;
+        app.resetErrors();
+
+        contact.resetErrors();
+        contact.setDisabled(contact.submit, !isValid());
+    }
+
+    !isValid() && emitter.emit('email:validation', { email: contact.email });
+});
+
+emitter.on<{ address: string; }>('address:validation', input =>
+{
+    const address = input?.address || order.address;
+    const isValid = () => app.paymentState.isValid && app.addressState.isValid;
+
+    if(!app.isAddressValid(address))
+    {
+        app.addressState.isValid = false;
+        app.errors.push(app.addressState.errorMessage);
+
+        order.errors = app.errors;
         order.setDisabled(order.submit, true);
 
-        modal.render([ contact.content ]);
-
-        contact.setDisabled(contact.submit, true);
-    })
-    .on('contacts:submit', () =>
+    } else
     {
-        api
-            .postOrder(app.order)
-            .then(order =>
-            {
-                app.resetContactFormState();
-                app.resetErrors();
+        app.order.address = input.address;
+        app.addressState.isValid = true;
+        app.resetErrors();
 
-                contact.setDisabled(contact.submit, true);
+        order.resetErrors();
+        order.setDisabled(order.submit, false);
 
-                success.onInit(order.total);
+        !isValid() && emitter.emit('order:payment');
+    }
 
-                modal.render([ success.content ]);
-            })
-            .catch(console.log);
-    })
-    .on('order:done', () =>
-    {
-        modal.close();
+    !isValid() && order.setDisabled(order.submit, true);
+});
 
-        app.order = {
-            payment: '',
-            address: '',
-            phone: '',
-            email: '',
-            items: [],
-            total: 0
-        };
+emitter.on('order:submit', () =>
+{
+    app.resetOrderFormState();
+    app.resetErrors();
 
-        app.basketList = [];
+    order.resetErrors();
+    order.resetPayment();
+    order.resetForm();
+    order.setDisabled(order.submit, true);
 
-        page.counter = 0;
+    modal.render([ contact.content ]);
 
-        success.onInit(0);
-    });
+    contact.setDisabled(contact.submit, true);
+});
+
+emitter.on('contacts:submit', () =>
+{
+    api
+        .postOrder(app.order)
+        .then(order =>
+        {
+            app.resetContactFormState();
+            app.resetErrors();
+
+            contact.setDisabled(contact.submit, true);
+
+            success.onInit(order.total);
+
+            modal.render([ success.content ]);
+        })
+        .catch(console.log);
+});
+
+emitter.on('order:done', () =>
+{
+    modal.close();
+
+    app.order = {
+        payment: '',
+        address: '',
+        phone: '',
+        email: '',
+        items: [],
+        total: 0
+    };
+
+    app.basketList = [];
+
+    page.counter = 0;
+
+    success.onInit(0);
+});

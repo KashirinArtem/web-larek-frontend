@@ -9,7 +9,7 @@ type EmitterEvent = {
 
 export interface IEvents
 {
-    on<T extends object>(event: EventName, callback: (data: T) => void): this;
+    on<T extends object>(event: EventName, callback: (data: T) => void): void;
     emit<T extends object>(event: string, data?: T): void;
     trigger<T extends object>(event: string, context?: Partial<T>): (data: T) => void;
 }
@@ -31,15 +31,13 @@ export class EventEmitter implements IEvents
     /**
      * Установить обработчик на событие
      */
-    on<T extends object>(eventName: EventName, callback: (event: T) => void): this
+    on<T extends object>(eventName: EventName, callback: (event: T) => void): void
     {
         if(!this._events.has(eventName))
         {
             this._events.set(eventName, new Set<Subscriber>());
         }
         this._events.get(eventName)?.add(callback);
-
-        return this;
     }
 
     /**
