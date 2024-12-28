@@ -7,7 +7,9 @@ export class CardPreview extends CardGallery
     protected _description: HTMLElement;
     protected _cardBtn: HTMLElement;
 
-    constructor ({ card, category, title, image, price, description, cardBtn }: ICardConfig, protected _handler: THandler)
+    constructor (
+        { card, category, title, image, price, description, cardBtn }: ICardConfig,
+        protected _handler: THandler)
     {
         super({ card, category, title, image, price });
 

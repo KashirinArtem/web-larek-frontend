@@ -100,6 +100,13 @@ emitter.on('modal:open', () =>
 
 emitter.on('modal:close', () =>
 {
+    order.resetForm();
+    order.resetPayment();
+    order.resetErrors();
+
+    contact.resetForm();
+    contact.resetErrors();
+
     page.isLockedContainerByScroll = false;
 });
 
@@ -129,6 +136,7 @@ emitter.on<IProduct>('card:select', product =>
     });
 
     cardPreview.onInit(product);
+
     modal.render([ cardPreview.content ]);
 });
 
@@ -152,13 +160,17 @@ emitter.on('basket:open', () =>
     {
         const cardItems = app.basketList.map((product, index) =>
         {
+            console.log('index', index);
             const card = new CardBasket(
                 cardBasketConfig,
-                () => emitter.emit('card:remove', product));
+                () => emitter.emit('card:remove', {
+                    product,
+                    index
+                }));
 
             card.onInit({
                 ...product,
-                index: ++index
+                index: index + 1
             });
 
             return card.content;
@@ -173,13 +185,13 @@ emitter.on('basket:open', () =>
     modal.render([ basket.content ]);
 });
 
-emitter.on<IProduct>('card:remove', product =>
+emitter.on<IProduct & { index: number; }>('card:remove', item =>
 {
-    console.log(1);
-    app.basketList = app.basketList.filter(item => item.id !== product.id);
+    app.basketList.splice(item.index, 1);
+
     page.counter = app.basketList.length;
 
-    emitter.trigger('basket:open');
+    emitter.emit('basket:open',);
 });
 
 emitter.on('basket:order', () =>
@@ -294,6 +306,7 @@ emitter.on<{ phone: string; }>('phone:validation', input =>
 
 emitter.on<{ address: string; }>('address:validation', input =>
 {
+
     const address = input?.address || order.address;
     const isValid = () => app.paymentState.isValid && app.addressState.isValid;
 
@@ -337,18 +350,55 @@ emitter.on('order:submit', () =>
 
 emitter.on('contacts:submit', () =>
 {
+    const validItemId = app.basketList
+        .filter(item => item.price)
+        .map(item => item.id);
+
+    page.counter = 0;
+
+    app.resetContactFormState();
+    app.resetErrors();
+    app.basketList = [];
+
+    if(!validItemId.length)
+    {
+        success.onInit(0);
+
+        modal.render([ success.content ]);
+
+        app.order = {
+            payment: '',
+            address: '',
+            phone: '',
+            email: '',
+            items: [],
+            total: 0
+        };
+
+        return;
+    }
+
     api
-        .postOrder(app.order)
+        .postOrder({
+            ...app.order,
+            items: validItemId
+        })
         .then(order =>
         {
-            app.resetContactFormState();
-            app.resetErrors();
-
             contact.setDisabled(contact.submit, true);
 
             success.onInit(order.total);
 
             modal.render([ success.content ]);
+
+            app.order = {
+                payment: '',
+                address: '',
+                phone: '',
+                email: '',
+                items: [],
+                total: 0
+            };
         })
         .catch(console.log);
 });
@@ -356,19 +406,6 @@ emitter.on('contacts:submit', () =>
 emitter.on('order:done', () =>
 {
     modal.close();
-
-    app.order = {
-        payment: '',
-        address: '',
-        phone: '',
-        email: '',
-        items: [],
-        total: 0
-    };
-
-    app.basketList = [];
-
-    page.counter = 0;
 
     success.onInit(0);
 });
